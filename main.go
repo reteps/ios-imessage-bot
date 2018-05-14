@@ -79,6 +79,12 @@ type Message struct {
 	IsCommand bool
 }
 
+func isSupportedFileFormat(item string, formats []string) bool {
+	parts := strings.Split(item, ".")
+	fmt.Println(parts)
+	return stringInSlice(parts[len(parts)-1], formats)
+}
+
 // sends a message - if it is a file location or url it downloads and sends that instead
 func send(sendToUrl, message, to string) error {
 	if message == "" {
@@ -90,7 +96,9 @@ func send(sendToUrl, message, to string) error {
 	rand.Seed(time.Now().UTC().UnixNano())
 	reqUID := strconv.FormatInt(int64(rand.Float64()*1679616), 36)
 	values := map[string]string{"hashid": to, "reqUID": reqUID, "text": "", "recipients": ""}
-	if len(message) > 7 && message[:7] == "/Users/" {
+	fileFormats := []string{"png", "jpg", "gif", "mp4", "bmp"}
+	fmt.Println(message)
+	if len(message) > 7 && message[:7] == "/Users/" && isSupportedFileFormat(message, fileFormats) {
 		r, err := os.Open(message)
 		if err != nil {
 			return err
@@ -103,7 +111,7 @@ func send(sendToUrl, message, to string) error {
 		if err != nil {
 			return err
 		}
-	} else if len(message) > 4 && message[:4] == "http" {
+	} else if len(message) > 4 && message[:4] == "http" && isSupportedFileFormat(message, fileFormats) {
 		response, err := http.Get(message)
 		if err != nil {
 			return err
@@ -286,7 +294,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	url := "192.168.1.43:333"
+	url := "192.168.1.25:333"
 	ws, err := websocket.Dial(fmt.Sprintf("ws://%s/service", url), "", "http://localhost/")
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Could not connect to ipod on %s.", url))

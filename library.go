@@ -439,7 +439,7 @@ func nick(c *Data, m Message) (*Data, error) {
 	if len(m.Message) == 0 || len(m.Message) > 50 {
 		return c, errors.New("Your nickname has to be less than 50 characters and longer than 0.")
 	}
-	c.Chat.Users[m.From].Nickname = m.Message
+	c.Chat.Users[m.From].Nickname = strings.TrimSpace(m.Message)
 	return c, nil
 }
 

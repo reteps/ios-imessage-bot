@@ -38,6 +38,7 @@ type Hangman struct {
 type User struct {
 	SentMessages        int
 	ConsecutiveCommands int
+	SentCommands        int
 	DeadChatWins        int
 	HangmanWins         int
 	IsAdmin             bool

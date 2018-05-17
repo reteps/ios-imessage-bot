@@ -64,10 +64,13 @@ func init() {
 		"/reddit":         reddit,
 		"/hmanwins":       hmanwins,
 		"/ak":             akinatorgame,
+		"/sentcommands":   sentcommands,
+		"/sent":           sent,
 	}
 	processingFuncs = []interface{}{
 		deadChatWins,
 		commandCounter,
+		conseqCommandCounter,
 		messageCounter,
 		eventRecorder,
 		languagebot,
@@ -269,6 +272,15 @@ func sortScores(users []miniUser, total float64) (string, error) {
 	}
 	return result, nil
 }
+
+// total sent
+func sent(c *Data, m Message) (string, error) {
+	var users []miniUser
+	for _, user := range c.Chat.Users {
+		users = append(users, miniUser{user.Nickname, user.SentMessages + user.SentCommands})
+	}
+	return sortScores(users, float64(c.Chat.Users["total"].SentMessages+c.Chat.Users["total"].SentCommands))
+}
 func sentmessages(c *Data, m Message) (string, error) {
 	var users []miniUser
 	for _, user := range c.Chat.Users {
@@ -418,10 +430,8 @@ func refresh(data map[string]*Data, event Message) (map[string]*Data, error) {
 			tempUsers[user] = value
 		}
 		// Reset data
-		fmt.Println(data["defaultChat"].LanguageBot.Words)
 		*data[event.Chat] = Data{}
 		*data[event.Chat] = *data["defaultChat"]
-		fmt.Println(data["defaultChat"].LanguageBot.Words)
 		// Copy users back
 		data[event.Chat].Chat.Users = map[string]*User{}
 		for user, value := range tempUsers {
@@ -706,20 +716,28 @@ func version(data *Data, event Message) (string, error) {
 }
 
 // counts the number of commands run in a row
-func commandCounter(data *Data, event Message) *Data {
+func conseqCommandCounter(data *Data, event Message) *Data {
 	if event.IsCommand && data.Chat.LastCommandSender == event.From {
 		data.Chat.Users[event.From].ConsecutiveCommands += 1
 	} else {
 		data.Chat.Users[event.From].ConsecutiveCommands = 0
 	}
-	data.Chat.Users[event.From].SentCommands += 1
+	return data
+}
+func commandCounter(data *Data, event Message) *Data {
+	if event.IsCommand {
+		data.Chat.Users[event.From].SentCommands += 1
+		data.Chat.Users["total"].SentCommands += 1
+	}
 	return data
 }
 
 // counts messages sent by user
 func messageCounter(data *Data, event Message) *Data {
-	data.Chat.Users[event.From].SentMessages += 1
-	data.Chat.Users["total"].SentMessages += 1
+	if !event.IsCommand {
+		data.Chat.Users[event.From].SentMessages += 1
+		data.Chat.Users["total"].SentMessages += 1
+	}
 	return data
 }
 

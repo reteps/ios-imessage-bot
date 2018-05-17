@@ -293,7 +293,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	url := "192.168.1.16:333"
+	url := "192.168.1.15:333"
 	ws, err := websocket.Dial(fmt.Sprintf("ws://%s/service", url), "", "http://localhost/")
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Could not connect to ipod on %s.", url))

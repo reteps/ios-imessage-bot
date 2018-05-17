@@ -262,7 +262,7 @@ func sortScores(users []miniUser, total float64) (string, error) {
 	})
 	var result string
 	for _, user := range users {
-		if user.Name != "default" && user.Name != "total" {
+		if user.Name != "defaultUser" && user.Name != "total" {
 			percent_sent := float64(user.Points) / total * 100.0
 			result += fmt.Sprintf("%s - %d (%.2f%%)\n", user.Name, user.Points, percent_sent) //user.Points/c.Chat.Users["total"].Counters["sentMessages"]*100)
 		}
@@ -379,6 +379,9 @@ func randomImage(subreddit string) (string, error) {
 	if len(results) == 0 {
 		return "", errors.New("That subreddit doesn't exist")
 	}
+	if len(results) == 1 {
+		return results[0].URL, nil
+	}
 	rand.Seed(time.Now().UTC().UnixNano())
 	return results[rand.Intn(len(results)-1)].URL, nil
 }
@@ -404,7 +407,10 @@ func refresh(data map[string]*Data, event Message) (map[string]*Data, error) {
 			tempUsers[user] = value
 		}
 		// Reset data
-		*data[event.Chat] = *data["default"]
+		fmt.Println(data["defaultChat"].LanguageBot.Words)
+		*data[event.Chat] = Data{}
+		*data[event.Chat] = *data["defaultChat"]
+		fmt.Println(data["defaultChat"].LanguageBot.Words)
 		// Copy users back
 		data[event.Chat].Chat.Users = map[string]*User{}
 		for user, value := range tempUsers {
@@ -419,7 +425,7 @@ func refresh(data map[string]*Data, event Message) (map[string]*Data, error) {
 func languagebot(data *Data, event Message) (string, *Data) {
 	if data.LanguageBot.On && !event.IsCommand {
 		for _, word := range data.LanguageBot.Words {
-			if strings.Contains(event.Message, word) {
+			if strings.Contains(strings.ToLower(event.Message), word) {
 				return data.LanguageBot.Image, data
 			}
 		}
@@ -433,7 +439,7 @@ func nick(c *Data, m Message) (*Data, error) {
 	if len(m.Message) == 0 || len(m.Message) > 50 {
 		return c, errors.New("Your nickname has to be less than 50 characters and longer than 0.")
 	}
-	c.Chat.Users[m.From].Nickname = m.Message
+	c.Chat.Users[m.From].Nickname = strings.TrimSpace(m.Message)
 	return c, nil
 }
 

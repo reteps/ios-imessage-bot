@@ -79,6 +79,11 @@ type Message struct {
 	IsCommand bool
 }
 
+func isSupportedFileFormat(item string, formats []string) bool {
+	parts := strings.Split(item, ".")
+	return stringInSlice(parts[len(parts)-1], formats)
+}
+
 // sends a message - if it is a file location or url it downloads and sends that instead
 func send(sendToUrl, message, to string) error {
 	if message == "" {
@@ -90,7 +95,8 @@ func send(sendToUrl, message, to string) error {
 	rand.Seed(time.Now().UTC().UnixNano())
 	reqUID := strconv.FormatInt(int64(rand.Float64()*1679616), 36)
 	values := map[string]string{"hashid": to, "reqUID": reqUID, "text": "", "recipients": ""}
-	if len(message) > 7 && message[:7] == "/Users/" {
+	fileFormats := []string{"png", "jpg", "gif", "mp4", "bmp"}
+	if len(message) > 7 && (message[:7] == "/Users/" || message[:6] == "/home/") && isSupportedFileFormat(message, fileFormats) {
 		r, err := os.Open(message)
 		if err != nil {
 			return err
@@ -103,7 +109,7 @@ func send(sendToUrl, message, to string) error {
 		if err != nil {
 			return err
 		}
-	} else if len(message) > 4 && message[:4] == "http" {
+	} else if len(message) > 4 && message[:4] == "http" && isSupportedFileFormat(message, fileFormats) {
 		response, err := http.Get(message)
 		if err != nil {
 			return err
@@ -173,11 +179,11 @@ func readsettings() (map[string]*Data, error) {
 // Creates a new chat if it doesnt exist
 func chatCreator(data map[string]*Data, event Message) map[string]*Data {
 	if _, exists := data[event.Chat]; !exists {
-		fmt.Printf("New chat created %s\n", event.Chat)
+		log.Printf("New chat created %s\n", event.Chat)
 		data[event.Chat] = &Data{}
-		*data[event.Chat] = *data["default"]
+		*data[event.Chat] = *data["defaultChat"]
 		data[event.Chat].Chat.Users = map[string]*User{}
-		for userName, value := range data["default"].Chat.Users {
+		for userName, value := range data["defaultChat"].Chat.Users {
 			data[event.Chat].Chat.Users[userName] = &User{}
 			*data[event.Chat].Chat.Users[userName] = *value
 		}
@@ -192,9 +198,9 @@ func chatCreator(data map[string]*Data, event Message) map[string]*Data {
 // Creates a new user if it doesnt exist
 func userCreator(data *Data, event Message) *Data {
 	if _, ok := data.Chat.Users[event.From]; !ok {
-		fmt.Printf("New user created %s: %s\n", event.From, event.Message)
+		log.Printf("New user created %s: %s\n", event.From, event.Message)
 		data.Chat.Users[event.From] = &User{}
-		*data.Chat.Users[event.From] = *data.Chat.Users["default"]
+		*data.Chat.Users[event.From] = *data.Chat.Users["defaultUser"]
 		data.Chat.Users[event.From].Nickname = event.From
 
 	}
@@ -260,7 +266,7 @@ func handleEvent(funcmap map[string]interface{}, processingFuncs []interface{}, 
 			err = send(fmt.Sprintf("http://%s/sendMessage.srv", url), message, event.Chat)
 
 			if err != nil {
-				fmt.Printf("Send Error:%s", err.Error())
+				log.Printf("Send Error:%s", err.Error())
 			}
 			break
 		}
@@ -272,7 +278,7 @@ func handleEvent(funcmap map[string]interface{}, processingFuncs []interface{}, 
 			message, data[event.Chat] = processingFunc.(func(*Data, Message) (string, *Data))(data[event.Chat], event)
 			err := send(fmt.Sprintf("http://%s/sendMessage.srv", url), message, event.Chat)
 			if err != nil {
-				fmt.Printf("Send Error:%s", err.Error())
+				log.Printf("Send Error:%s", err.Error())
 			}
 		default:
 			data[event.Chat] = processingFunc.(func(*Data, Message) *Data)(data[event.Chat], event)
@@ -291,6 +297,7 @@ func main() {
 	if err != nil {
 		log.Fatal(fmt.Sprintf("Could not connect to ipod on %s.", url))
 	}
+	log.Println("ios-imessage-bot started.")
 	for {
 		var event []map[string]interface{}
 		websocket.JSON.Receive(ws, &event)

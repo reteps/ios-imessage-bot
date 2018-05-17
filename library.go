@@ -86,7 +86,7 @@ func reddit(data *Data, m Message) (string, error) {
 	if len(m.Message) > 0 {
 		return randomImage(m.Message)
 	}
-	return "", errors.New("You done goofed you absolute waste of human life.")
+	return "", errors.New("Please specify a subreddit.")
 }
 
 func hangman(c *Data, m Message) (string, *Data, error) {

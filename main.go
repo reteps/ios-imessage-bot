@@ -38,6 +38,7 @@ type Hangman struct {
 type User struct {
 	SentMessages        int
 	ConsecutiveCommands int
+	SentCommands        int
 	DeadChatWins        int
 	HangmanWins         int
 	IsAdmin             bool
@@ -186,7 +187,6 @@ func chatCreator(data map[string]*Data, event Message) map[string]*Data {
 		for userName, value := range data["defaultChat"].Chat.Users {
 			data[event.Chat].Chat.Users[userName] = &User{}
 			*data[event.Chat].Chat.Users[userName] = *value
-			data[event.Chat].Chat.Users[userName].Nickname = userName
 		}
 		if event.Chat[:4] == "chat" {
 			data[event.Chat].Chat.IsGroupChat = true

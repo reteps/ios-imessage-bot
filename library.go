@@ -272,14 +272,25 @@ func sortScores(users []miniUser, total float64) (string, error) {
 func sentmessages(c *Data, m Message) (string, error) {
 	var users []miniUser
 	for _, user := range c.Chat.Users {
-		users = append(users, miniUser{user.Nickname, user.SentMessages})
+		if user.SentMessages != 0 {
+			users = append(users, miniUser{user.Nickname, user.SentMessages})
+		}
 	}
 	return sortScores(users, float64(c.Chat.Users["total"].SentMessages))
+}
+func sentcommands(c *Data, m Message) (string, error) {
+	var users []miniUser
+	for _, user := range c.Chat.Users {
+		users = append(users, miniUser{user.Nickname, user.SentCommands})
+	}
+	return sortScores(users, float64(c.Chat.Users["total"].SentCommands))
 }
 func hmanwins(c *Data, m Message) (string, error) {
 	var users []miniUser
 	for _, user := range c.Chat.Users {
-		users = append(users, miniUser{user.Nickname, user.HangmanWins})
+		if user.HangmanWins != 0 {
+			users = append(users, miniUser{user.Nickname, user.HangmanWins})
+		}
 	}
 	return sortScores(users, float64(c.Chat.Users["total"].HangmanWins))
 }
@@ -477,14 +488,15 @@ func name(c *Data, m Message) (string, error) {
 }
 
 // Returns the number of dead chat wins a user has
+
 func deadchatwins(c *Data, m Message) (string, error) {
-	if len(m.Message) != 0 {
-		if _, exists := c.Chat.Users[m.Message]; !exists {
-			return "", errors.New(c.Main.Messages["DoesNotExistError"])
+	var users []miniUser
+	for _, user := range c.Chat.Users {
+		if user.DeadChatWins != 0 {
+			users = append(users, miniUser{user.Nickname, user.DeadChatWins})
 		}
-		return strconv.Itoa(c.Chat.Users[m.Message].DeadChatWins), nil
 	}
-	return strconv.Itoa(c.Chat.Users[m.From].DeadChatWins), nil
+	return sortScores(users, float64(c.Chat.Users["total"].DeadChatWins))
 }
 
 // Returns if it is currently a dead chat
@@ -700,6 +712,7 @@ func commandCounter(data *Data, event Message) *Data {
 	} else {
 		data.Chat.Users[event.From].ConsecutiveCommands = 0
 	}
+	data.Chat.Users[event.From].SentCommands += 1
 	return data
 }
 

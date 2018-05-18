@@ -484,7 +484,7 @@ func deadChatWins(c *Data, m Message) *Data {
 	//say dead chat after an hour to start dead chat. if the next message is dead chat, and the last message was dead chat and they replied within an hour, they win
 	if c.Chat.IsDeadChat && strings.ToLower(m.Message) != "dead chat" && !m.IsCommand {
 		c.Chat.IsDeadChat = false
-	} else if strings.ToLower(m.Message) == "dead chat" && c.Chat.LastMessage.Message == strings.ToLower("dead chat") && m.Timestamp-c.Chat.LastMessage.Timestamp < 3600 && c.Chat.IsDeadChat && c.Chat.LastMessage.From != m.From {
+	} else if (strings.ToLower(m.Message) == "dead chat") && (c.Chat.LastMessage.Message == strings.ToLower("dead chat")) && (m.Timestamp-c.Chat.LastMessage.Timestamp < 3600) && (c.Chat.IsDeadChat) && (c.Chat.LastMessage.From != m.From) {
 		c.Chat.Users[m.From].DeadChatWins += 1
 		c.Chat.IsDeadChat = false
 	} else if strings.ToLower(m.Message) == "dead chat" && m.Timestamp-c.Chat.LastMessage.Timestamp > 3600 {

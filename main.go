@@ -58,7 +58,7 @@ type Eightball struct {
 type Main struct {
 	HelpMessages        map[string]string `json:"HelpMessages"`
 	Messages            map[string]string `json:"Messages"`
-	ResetSettings       bool
+	AdultContent        bool
 	BlacklistedCommands []string `json:"BlacklistedCommands"`
 	WhitelistedCommands []string `json:"WhitelistedCommands"`
 	MaxConsecutive      int

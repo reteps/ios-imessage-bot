@@ -66,6 +66,7 @@ func init() {
 		"/ak":             akinatorgame,
 		"/sentcommands":   sentcommands,
 		"/sent":           sent,
+		"/togglekid":      togglekid,
 	}
 	processingFuncs = []interface{}{
 		deadChatWins,
@@ -376,12 +377,26 @@ func akinatorgame(data *Data, m Message) (string, *Data, error) {
 
 // Returns a random image from /r/memes top from the day
 func meme(data *Data, m Message) (string, error) {
-	return randomImage("memes")
+	if data.Main.AdultContent {
+		return randomImage("memes")
+	}
+	return "", errors.New("Kid friendly is on. To disable it, use /togglekid")
 }
 
 // Returns a random image from /r/dankmemes top from the day
 func dankmeme(data *Data, m Message) (string, error) {
-	return randomImage("dankmemes")
+	if data.Main.AdultContent {
+		return randomImage("dankmemes")
+	}
+	return "", errors.New("Kid friendly is on. To disable it, use /togglekid")
+}
+func togglekid(data *Data, m Message) (string, *Data, error) {
+	if data.Main.AdultContent {
+		data.Main.AdultContent = false
+		return "Kid friendly is on.", data, nil
+	}
+	data.Main.AdultContent = true
+	return "Disclaimer: Content may be discriminatory or offensive. I have no control on the exact content for many features", data, nil
 }
 
 // Returns a random image from /r/wholesomememes top from the day
